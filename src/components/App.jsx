@@ -15,38 +15,38 @@ export const App = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [largeImgUrl, setlargeImgUrl] = useState('');
 
-  const fetchImages = async () => {
-    setIsLoading(true);
-    try {
-      const response = await getImages(query, currentPage);
-      const imagesArray = response.hits;
-      const totalHits = response.total;
-      const showedHits = images.length;
-
-      if (imagesArray.length !== 0) {
-        setImages(prevState => [...prevState, ...imagesArray]);
-
-        setShowLoadMore(true);
-      }
-
-      if (totalHits <= showedHits || totalHits <= PER_PAGE) {
-        setShowLoadMore(false);
-      }
-    } catch {
-      alert('Something went wrong. Try again');
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
   useEffect(() => {
-    if (query !== null) {
-      fetchImages();
+    async function fetchImages() {
+      if (query === null) {
+        return;
+      }
+
+      setIsLoading(true);
+
+      try {
+        const response = await getImages(query, currentPage);
+        const imagesArray = response.hits;
+
+        if (imagesArray.length !== 0) {
+          setImages(prevState => [...prevState, ...imagesArray]);
+
+          setShowLoadMore(true);
+        }
+
+        if (imagesArray.length < PER_PAGE) {
+          setShowLoadMore(false);
+        }
+      } catch {
+        alert('Something went wrong. Try again');
+      } finally {
+        setIsLoading(false);
+      }
     }
+
+    fetchImages();
   }, [query, currentPage]);
 
   const handleSearch = searchData => {
-    console.log(searchData);
     if (query !== searchData) {
       setQuery(searchData.trim());
       setImages([]);
