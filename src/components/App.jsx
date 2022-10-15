@@ -1,4 +1,4 @@
-import { Component } from 'react';
+import { useState, useEffect } from 'react';
 import { Searchbar } from './Searchbar/Searchbar';
 import { ImageGallery } from './ImageGallery/ImageGallery';
 import { Button } from './Button/Button';
@@ -6,31 +6,17 @@ import { Loader } from './Loader/Loader';
 import { Modal } from './Modal/Modal';
 import { getImages, PER_PAGE } from '../Api';
 
-export class App extends Component {
-  state = {
-    images: [],
-    query: null,
-    currentPage: 1,
-    showLoadMore: false,
-    showModal: false,
-    isLoading: false,
-    largeImgUrl: '',
-  };
+export const App = () => {
+  const [images, setImages] = useState([]);
+  const [query, setQuery] = useState(null);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [showLoadMore, setShowLoadMore] = useState(false);
+  const [showModal, setShowModal] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const [largeImgUrl, setlargeImgUrl] = useState('');
 
-  componentDidUpdate(prevProps, prevState) {
-    if (
-      prevState.query !== this.state.query ||
-      prevState.currentPage !== this.state.currentPage
-    ) {
-      this.fetchImages();
-    }
-  }
-
-  async fetchImages() {
-    const { query, currentPage, images } = this.state;
-
-    this.setState({ isLoading: true });
-
+  const fetchImages = async () => {
+    setIsLoading(true);
     try {
       const response = await getImages(query, currentPage);
       const imagesArray = response.hits;
@@ -38,72 +24,69 @@ export class App extends Component {
       const showedHits = images.length;
 
       if (imagesArray.length !== 0) {
-        this.setState(prevState => ({
-          images: [...prevState.images, ...imagesArray],
-        }));
-        this.setState({ showLoadMore: true });
+        setImages(prevState => [...prevState, ...imagesArray]);
+
+        setShowLoadMore(true);
       }
 
       if (totalHits <= showedHits || totalHits <= PER_PAGE) {
-        alert(`No more results for ${query}`);
-        this.setState({ showLoadMore: false });
+        setShowLoadMore(false);
       }
     } catch {
       alert('Something went wrong. Try again');
     } finally {
-      this.setState({ isLoading: false });
-    }
-  }
-
-  handleSearch = searchData => {
-    if (this.state.query !== searchData) {
-      this.setState({ query: searchData.trim(), images: [], currentPage: 1 });
+      setIsLoading(false);
     }
   };
 
-  handleLoadMore = () => {
-    this.setState(prevState => ({ currentPage: prevState.currentPage + 1 }));
+  useEffect(() => {
+    if (query !== null) {
+      fetchImages();
+    }
+  }, [query, currentPage]);
+
+  const handleSearch = searchData => {
+    console.log(searchData);
+    if (query !== searchData) {
+      setQuery(searchData.trim());
+      setImages([]);
+      setCurrentPage(1);
+    }
   };
 
-  getLargeImgUrl = url => {
-    this.setState({ largeImgUrl: url });
+  const handleLoadMore = () => {
+    setCurrentPage(prevState => prevState + 1);
   };
 
-  toggleModal = url => {
-    this.getLargeImgUrl(url);
-
-    this.setState(({ showModal }) => ({
-      showModal: !showModal,
-    }));
+  const getLargeImgUrl = url => {
+    setlargeImgUrl(url);
   };
 
-  render() {
-    const { images, isLoading, showLoadMore, largeImgUrl } = this.state;
+  const toggleModal = url => {
+    getLargeImgUrl(url);
 
-    return (
-      <div
-        style={{
-          display: 'grid',
-          gridTemplateColumns: '1fr',
-          gap: 16,
-          paddingBottom: 24,
-        }}
-      >
-        <Searchbar onSearch={this.handleSearch} />
+    setShowModal(!showModal);
+  };
 
-        {this.state.images && (
-          <ImageGallery gallery={images} onImgClick={this.toggleModal} />
-        )}
-        <Loader status={isLoading} />
-        {showLoadMore && !isLoading && (
-          <Button loadMore={this.handleLoadMore} />
-        )}
-        {this.state.showModal && (
-          <Modal onClose={this.toggleModal}>
-            <img src={largeImgUrl} alt="info" />
-          </Modal>
-        )}
-      </div>
-    );
-  }
-}
+  return (
+    <div
+      style={{
+        display: 'grid',
+        gridTemplateColumns: '1fr',
+        gap: 16,
+        paddingBottom: 24,
+      }}
+    >
+      <Searchbar onSearch={handleSearch} />
+
+      {images && <ImageGallery gallery={images} onImgClick={toggleModal} />}
+      <Loader status={isLoading} />
+      {showLoadMore && !isLoading && <Button loadMore={handleLoadMore} />}
+      {showModal && (
+        <Modal onClose={toggleModal}>
+          <img src={largeImgUrl} alt="info" />
+        </Modal>
+      )}
+    </div>
+  );
+};
