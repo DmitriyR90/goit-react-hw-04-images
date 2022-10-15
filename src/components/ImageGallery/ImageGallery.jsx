@@ -2,7 +2,7 @@ import { ImageGalleryItem } from '../ImageGalleryItem/ImageGalleryItem';
 import { Gallery } from './ImageGallery.styled';
 import PropTypes from 'prop-types';
 
-export const ImageGallery = ({ gallery, onImgClick }) => {
+export const ImageGallery = ({ gallery }) => {
   return (
     <Gallery>
       {gallery.map(image => {
@@ -10,7 +10,7 @@ export const ImageGallery = ({ gallery, onImgClick }) => {
           <ImageGalleryItem
             key={image.id}
             galleryItem={image}
-            onClick={onImgClick}
+            // onClick={onImgClick}
           />
         );
       })}
@@ -24,5 +24,4 @@ ImageGallery.propTypes = {
       id: PropTypes.number.isRequired,
     })
   ),
-  onImgClick: PropTypes.func.isRequired,
 };
